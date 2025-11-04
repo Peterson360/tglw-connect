@@ -46,6 +46,11 @@ All colors MUST be HSL.
     --shadow-glow: 0 0 30px hsl(43 96% 56% / 0.3);
 
     --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    
+    /* Glassmorphism effects */
+    --glass-bg: rgba(255, 255, 255, 0.6);
+    --glass-border: rgba(255, 255, 255, 0.3);
+    --glass-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.15);
   }
 
   .dark {
@@ -76,6 +81,11 @@ All colors MUST be HSL.
     --border: 240 30% 18%;
     --input: 240 30% 18%;
     --ring: 243 75% 55%;
+    
+    /* Glassmorphism for dark mode */
+    --glass-bg: rgba(255, 255, 255, 0.05);
+    --glass-border: rgba(255, 255, 255, 0.1);
+    --glass-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
   }
 }
 
