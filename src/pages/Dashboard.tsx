@@ -1,10 +1,11 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
-import { Book, Clock, Send, Menu as MenuIcon, Shield, MessageCircle, Youtube, Facebook } from "lucide-react";
+import { Book, Clock, Send, Menu as MenuIcon, Shield, MessageCircle, Youtube, Facebook, Bell } from "lucide-react";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import DevotionalGallery from "@/components/DevotionalGallery";
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -60,10 +61,20 @@ const Dashboard = () => {
       .on(
         "postgres_changes",
         { event: "INSERT", schema: "public", table: "devotionals" },
-        () => {
+        (payload) => {
           toast({
-            title: "New Devotional!",
-            description: "A new devotional has been added.",
+            title: "🙏 New Devotional Available!",
+            description: "Tap to read today's spiritual message.",
+            duration: 10000,
+            action: (
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => navigate(`/devotional/${payload.new.id}`)}
+              >
+                Read Now
+              </Button>
+            ),
           });
           fetchData();
         }
@@ -77,8 +88,9 @@ const Dashboard = () => {
         { event: "INSERT", schema: "public", table: "announcements" },
         () => {
           toast({
-            title: "New Announcement!",
-            description: "Check out the latest announcement.",
+            title: "📢 New Announcement!",
+            description: "Check out the latest update from the church.",
+            duration: 8000,
           });
           fetchData();
         }
@@ -124,11 +136,18 @@ const Dashboard = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-primary/10 to-secondary/10">
-      <div className="container mx-auto p-6 space-y-8">
-        <div className="flex justify-between items-center">
+    <div className="min-h-screen bg-gradient-to-br from-background via-primary/5 to-secondary/5 relative overflow-hidden">
+      <div className="absolute inset-0 bg-grid-white/[0.02] pointer-events-none" />
+      <div className="container mx-auto p-6 space-y-8 relative z-10">
+        <div className="flex justify-between items-center backdrop-blur-sm bg-card/30 rounded-2xl p-6 border border-primary/10">
           <div>
-            <h1 className="text-4xl font-bold mb-2">Welcome, {username}!</h1>
+            <h1 className="text-4xl md:text-5xl font-bold mb-2 bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+              Welcome, {username}!
+            </h1>
+            <p className="text-muted-foreground flex items-center gap-2">
+              <Bell className="h-4 w-4" />
+              Stay blessed with today's devotional
+            </p>
           </div>
           <div className="flex gap-2">
             {isAdmin && (
@@ -147,15 +166,15 @@ const Dashboard = () => {
         </div>
 
         {announcements.length > 0 && (
-          <Card className="backdrop-blur-lg bg-card/50 border-2 border-primary/30">
-            <CardHeader>
-              <CardTitle>📢 Latest Announcements</CardTitle>
+          <Card className="backdrop-blur-xl bg-gradient-to-br from-card/80 to-card/60 border-2 border-primary/30 shadow-2xl animate-fade-in">
+            <CardHeader className="bg-gradient-to-r from-primary/10 to-secondary/10">
+              <CardTitle className="text-2xl">📢 Latest Announcements</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-3">
+            <CardContent className="space-y-3 p-6">
               {announcements.slice(0, 3).map((announcement) => (
-                <div key={announcement.id} className="p-3 rounded-lg bg-background/30">
-                  <h3 className="font-semibold">{announcement.title}</h3>
-                  <p className="text-sm text-muted-foreground mt-1">{announcement.content}</p>
+                <div key={announcement.id} className="p-4 rounded-xl bg-background/40 backdrop-blur-sm border border-primary/10 hover:border-primary/30 transition-all duration-300 hover:shadow-lg">
+                  <h3 className="font-bold text-lg">{announcement.title}</h3>
+                  <p className="text-sm text-muted-foreground mt-2">{announcement.content}</p>
                 </div>
               ))}
             </CardContent>
@@ -163,10 +182,10 @@ const Dashboard = () => {
         )}
 
         {devotionals.length > 0 && (
-          <Card className="backdrop-blur-xl bg-card/80 border border-primary/20 shadow-2xl overflow-hidden group hover:shadow-3xl transition-all duration-300 animate-fade-in">
-            <CardHeader className="pb-3">
-              <CardTitle className="flex items-center gap-2 text-2xl">
-                <Book className="h-6 w-6 text-primary" />
+          <Card className="backdrop-blur-xl bg-gradient-to-br from-primary/5 via-card/80 to-secondary/5 border-2 border-primary/30 shadow-2xl overflow-hidden group hover:shadow-[0_20px_60px_-15px_rgba(0,0,0,0.3)] transition-all duration-500 animate-fade-in">
+            <CardHeader className="pb-3 bg-gradient-to-r from-primary/10 to-secondary/10">
+              <CardTitle className="flex items-center gap-2 text-3xl font-bold">
+                <Book className="h-7 w-7 text-primary animate-pulse" />
                 Today's Devotional
               </CardTitle>
             </CardHeader>
@@ -180,22 +199,28 @@ const Dashboard = () => {
                     <img
                       src={devotionals[0].image_url}
                       alt={devotionals[0].title}
-                      className="w-full h-[400px] object-cover transition-transform duration-500 group-hover:scale-105"
+                      className="w-full h-[450px] object-cover transition-transform duration-700 group-hover:scale-110"
                     />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                    <div className="absolute bottom-0 left-0 right-0 p-6 text-white transform translate-y-full group-hover:translate-y-0 transition-transform duration-300">
-                      <p className="text-sm font-medium">Click to view full devotional</p>
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent" />
+                    <div className="absolute inset-0 bg-primary/0 group-hover:bg-primary/10 transition-colors duration-500" />
+                    <div className="absolute bottom-0 left-0 right-0 p-8 text-white">
+                      <div className="transform translate-y-0 transition-transform duration-300">
+                        <h3 className="font-bold text-2xl md:text-3xl mb-3 drop-shadow-lg">{devotionals[0].title}</h3>
+                        <p className="text-sm font-medium opacity-90">
+                          {new Date(devotionals[0].date).toLocaleDateString("en-US", {
+                            weekday: "long",
+                            month: "long",
+                            day: "numeric",
+                          })}
+                        </p>
+                      </div>
+                      <div className="mt-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                        <p className="text-sm font-semibold bg-primary/80 backdrop-blur-sm px-4 py-2 rounded-full inline-flex items-center gap-2">
+                          <span>Click to view full devotional</span>
+                          <span className="animate-bounce">→</span>
+                        </p>
+                      </div>
                     </div>
-                  </div>
-                  <div className="p-6">
-                    <h3 className="font-bold text-xl mb-2 group-hover:text-primary transition-colors">{devotionals[0].title}</h3>
-                    <p className="text-sm text-muted-foreground">
-                      {new Date(devotionals[0].date).toLocaleDateString("en-US", {
-                        weekday: "long",
-                        month: "long",
-                        day: "numeric",
-                      })}
-                    </p>
                   </div>
                 </div>
               )}
@@ -203,26 +228,30 @@ const Dashboard = () => {
           </Card>
         )}
 
+        <DevotionalGallery />
+
         <div className="grid md:grid-cols-2 gap-6">
           {activities.map((activity, index) => {
             const Icon = activity.icon;
             return (
               <Card 
                 key={index} 
-                className="cursor-pointer hover:shadow-lg transition-shadow backdrop-blur-lg bg-card/50 border-[var(--glass-border)]"
+                className="cursor-pointer hover:shadow-2xl hover:-translate-y-1 transition-all duration-300 backdrop-blur-xl bg-gradient-to-br from-card/80 to-card/60 border border-primary/20 group"
                 onClick={activity.action}
               >
                 <CardHeader>
-                  <div className="flex items-center gap-3">
-                    <Icon className="h-8 w-8 text-primary" />
+                  <div className="flex items-center gap-4">
+                    <div className="p-3 rounded-2xl bg-primary/10 group-hover:bg-primary/20 transition-colors duration-300">
+                      <Icon className="h-8 w-8 text-primary" />
+                    </div>
                     <div>
-                      <CardTitle>{activity.title}</CardTitle>
-                      <p className="text-sm text-muted-foreground">{activity.time}</p>
+                      <CardTitle className="text-xl">{activity.title}</CardTitle>
+                      <p className="text-sm text-muted-foreground font-medium">{activity.time}</p>
                     </div>
                   </div>
                 </CardHeader>
                 <CardContent>
-                  <CardDescription>{activity.description}</CardDescription>
+                  <CardDescription className="text-base">{activity.description}</CardDescription>
                 </CardContent>
               </Card>
             );
@@ -230,21 +259,22 @@ const Dashboard = () => {
         </div>
 
         {socialLinks.length > 0 && (
-          <Card className="backdrop-blur-lg bg-card/50 border-[var(--glass-border)]">
-            <CardHeader>
-              <CardTitle>Connect With Us</CardTitle>
+          <Card className="backdrop-blur-xl bg-gradient-to-br from-card/80 to-card/60 border border-primary/20 shadow-xl">
+            <CardHeader className="bg-gradient-to-r from-primary/10 to-secondary/10">
+              <CardTitle className="text-2xl">Connect With Us</CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="p-6">
               <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                 {socialLinks.map((link) => (
                   <Button
                     key={link.id}
                     variant="outline"
-                    className="w-full backdrop-blur-sm bg-background/50"
+                    size="lg"
+                    className="w-full backdrop-blur-sm bg-background/50 hover:bg-primary/10 hover:border-primary/50 transition-all duration-300 hover:scale-105"
                     onClick={() => window.open(link.url, "_blank")}
                   >
                     {getIconComponent(link.icon)}
-                    <span className="ml-2">{link.platform}</span>
+                    <span className="ml-2 font-semibold">{link.platform}</span>
                   </Button>
                 ))}
               </div>
@@ -252,23 +282,26 @@ const Dashboard = () => {
           </Card>
         )}
 
-        <Card className="backdrop-blur-lg bg-card/50 border-2 border-primary/20">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Send className="h-5 w-5" />
+        <Card className="backdrop-blur-xl bg-gradient-to-br from-card/80 to-card/60 border-2 border-primary/30 shadow-xl">
+          <CardHeader className="bg-gradient-to-r from-primary/10 to-secondary/10">
+            <CardTitle className="flex items-center gap-2 text-2xl">
+              <Send className="h-6 w-6 text-primary" />
               Quick Actions
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-3">
+          <CardContent className="space-y-4 p-6">
             <Button 
-              className="w-full" 
+              size="lg"
+              className="w-full text-lg py-6 shadow-lg hover:shadow-xl transition-all duration-300" 
               onClick={() => navigate("/prayer-request")}
             >
+              <Send className="mr-2 h-5 w-5" />
               Send Prayer Request
             </Button>
             <Button 
               variant="outline" 
-              className="w-full" 
+              size="lg"
+              className="w-full text-lg py-6 hover:bg-primary/10 transition-all duration-300" 
               onClick={() => navigate("/about-church")}
             >
               Learn More About TGLW
