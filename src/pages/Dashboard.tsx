@@ -163,26 +163,42 @@ const Dashboard = () => {
         )}
 
         {devotionals.length > 0 && (
-          <Card className="backdrop-blur-lg bg-card/50 border-[var(--glass-border)]">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Book className="h-5 w-5" />
+          <Card className="backdrop-blur-xl bg-card/80 border border-primary/20 shadow-2xl overflow-hidden group hover:shadow-3xl transition-all duration-300 animate-fade-in">
+            <CardHeader className="pb-3">
+              <CardTitle className="flex items-center gap-2 text-2xl">
+                <Book className="h-6 w-6 text-primary" />
                 Today's Devotional
               </CardTitle>
             </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {devotionals[0] && (
-                  <div>
-                    <h3 className="font-semibold mb-2">{devotionals[0].title}</h3>
+            <CardContent className="p-0">
+              {devotionals[0] && (
+                <div 
+                  className="cursor-pointer relative"
+                  onClick={() => navigate(`/devotional/${devotionals[0].id}`)}
+                >
+                  <div className="relative overflow-hidden">
                     <img
                       src={devotionals[0].image_url}
                       alt={devotionals[0].title}
-                      className="w-full rounded-lg shadow-lg"
+                      className="w-full h-[400px] object-cover transition-transform duration-500 group-hover:scale-105"
                     />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                    <div className="absolute bottom-0 left-0 right-0 p-6 text-white transform translate-y-full group-hover:translate-y-0 transition-transform duration-300">
+                      <p className="text-sm font-medium">Click to view full devotional</p>
+                    </div>
                   </div>
-                )}
-              </div>
+                  <div className="p-6">
+                    <h3 className="font-bold text-xl mb-2 group-hover:text-primary transition-colors">{devotionals[0].title}</h3>
+                    <p className="text-sm text-muted-foreground">
+                      {new Date(devotionals[0].date).toLocaleDateString("en-US", {
+                        weekday: "long",
+                        month: "long",
+                        day: "numeric",
+                      })}
+                    </p>
+                  </div>
+                </div>
+              )}
             </CardContent>
           </Card>
         )}

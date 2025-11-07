@@ -8,6 +8,7 @@ import SplashScreen from "./components/SplashScreen";
 import Auth from "./pages/Auth";
 import Dashboard from "./pages/Dashboard";
 import Admin from "./pages/Admin";
+import DevotionalView from "./pages/DevotionalView";
 import PrayerTimer from "./pages/PrayerTimer";
 import PrayerRequest from "./pages/PrayerRequest";
 import Menu from "./pages/Menu";
@@ -58,6 +59,7 @@ const App = () => {
             <Route path="/auth" element={<Auth />} />
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/admin" element={<Admin />} />
+            <Route path="/devotional/:id" element={<DevotionalView />} />
             <Route path="/prayer-timer" element={<PrayerTimer />} />
             <Route path="/prayer-request" element={<PrayerRequest />} />
             <Route path="/menu" element={<Menu />} />
