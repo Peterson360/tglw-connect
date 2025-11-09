@@ -4,15 +4,17 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { Lock, Mail, User } from "lucide-react";
+import { Lock, Mail, User, Shield } from "lucide-react";
 
 const Auth = () => {
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [username, setUsername] = useState("");
+  const [role, setRole] = useState<"user" | "admin">("user");
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -74,7 +76,7 @@ const Auth = () => {
           }
         }
       } else {
-        const { error } = await supabase.auth.signUp({
+        const { data, error } = await supabase.auth.signUp({
           email,
           password,
           options: {
@@ -87,9 +89,23 @@ const Auth = () => {
         
         if (error) throw error;
         
+        // Insert the selected role into user_roles table
+        if (data.user) {
+          const { error: roleError } = await supabase
+            .from("user_roles")
+            .insert({
+              user_id: data.user.id,
+              role: role,
+            });
+          
+          if (roleError) {
+            console.error("Error setting role:", roleError);
+          }
+        }
+        
         toast({
           title: "Account created!",
-          description: "You can now log in.",
+          description: `Your ${role} account is ready. You can now log in.`,
         });
         setIsLogin(true);
       }
@@ -123,21 +139,49 @@ const Auth = () => {
         <CardContent>
           <form onSubmit={handleAuth} className="space-y-5">
             {!isLogin && (
-              <div className="space-y-2">
-                <Label htmlFor="username" className="text-sm font-medium">Username</Label>
-                <div className="relative">
-                  <User className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                  <Input
-                    id="username"
-                    type="text"
-                    placeholder="Choose a username"
-                    value={username}
-                    onChange={(e) => setUsername(e.target.value)}
-                    required={!isLogin}
-                    className="pl-10 h-12 backdrop-blur-sm bg-background/60 border-primary/20 focus:border-primary/50 transition-all"
-                  />
+              <>
+                <div className="space-y-2">
+                  <Label htmlFor="username" className="text-sm font-medium">Username</Label>
+                  <div className="relative">
+                    <User className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                    <Input
+                      id="username"
+                      type="text"
+                      placeholder="Choose a username"
+                      value={username}
+                      onChange={(e) => setUsername(e.target.value)}
+                      required={!isLogin}
+                      className="pl-10 h-12 backdrop-blur-sm bg-background/60 border-primary/20 focus:border-primary/50 transition-all"
+                    />
+                  </div>
                 </div>
-              </div>
+                
+                <div className="space-y-3">
+                  <Label className="text-sm font-medium">Register as</Label>
+                  <RadioGroup value={role} onValueChange={(value) => setRole(value as "user" | "admin")} className="space-y-3">
+                    <div className="flex items-center space-x-3 p-3 rounded-lg border border-primary/20 bg-background/60 hover:border-primary/40 transition-all">
+                      <RadioGroupItem value="user" id="user" />
+                      <Label htmlFor="user" className="flex items-center gap-2 cursor-pointer flex-1">
+                        <User className="h-5 w-5 text-muted-foreground" />
+                        <div>
+                          <div className="font-medium">User</div>
+                          <div className="text-xs text-muted-foreground">Access devotionals and content</div>
+                        </div>
+                      </Label>
+                    </div>
+                    <div className="flex items-center space-x-3 p-3 rounded-lg border border-primary/20 bg-background/60 hover:border-primary/40 transition-all">
+                      <RadioGroupItem value="admin" id="admin" />
+                      <Label htmlFor="admin" className="flex items-center gap-2 cursor-pointer flex-1">
+                        <Shield className="h-5 w-5 text-muted-foreground" />
+                        <div>
+                          <div className="font-medium">Admin</div>
+                          <div className="text-xs text-muted-foreground">Manage devotionals and announcements</div>
+                        </div>
+                      </Label>
+                    </div>
+                  </RadioGroup>
+                </div>
+              </>
             )}
             
             <div className="space-y-2">
@@ -204,6 +248,7 @@ const Auth = () => {
                 setEmail("");
                 setPassword("");
                 setUsername("");
+                setRole("user");
               }}
             >
               {isLogin ? "Create new account" : "Sign in instead"}
