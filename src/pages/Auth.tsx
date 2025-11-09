@@ -21,7 +21,18 @@ const Auth = () => {
     const checkUser = async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
-        navigate("/dashboard");
+        // Check if user is admin
+        const { data: roleData } = await supabase
+          .from("user_roles")
+          .select("role")
+          .eq("user_id", user.id)
+          .maybeSingle();
+
+        if (roleData?.role === "admin") {
+          navigate("/admin");
+        } else {
+          navigate("/dashboard");
+        }
       }
     };
     checkUser();
@@ -33,18 +44,35 @@ const Auth = () => {
 
     try {
       if (isLogin) {
-        const { error } = await supabase.auth.signInWithPassword({
+        const { error, data } = await supabase.auth.signInWithPassword({
           email,
           password,
         });
         
         if (error) throw error;
         
-        toast({
-          title: "Welcome back!",
-          description: "Successfully logged in.",
-        });
-        navigate("/dashboard");
+        // Check if user is admin
+        if (data.user) {
+          const { data: roleData } = await supabase
+            .from("user_roles")
+            .select("role")
+            .eq("user_id", data.user.id)
+            .maybeSingle();
+
+          if (roleData?.role === "admin") {
+            toast({
+              title: "Welcome back, Admin!",
+              description: "Redirecting to admin panel.",
+            });
+            navigate("/admin");
+          } else {
+            toast({
+              title: "Welcome back!",
+              description: "Successfully logged in.",
+            });
+            navigate("/dashboard");
+          }
+        }
       } else {
         const { error } = await supabase.auth.signUp({
           email,
