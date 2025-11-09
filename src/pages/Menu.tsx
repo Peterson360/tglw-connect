@@ -1,12 +1,40 @@
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowLeft, Home, Church, User, Code, Send } from "lucide-react";
+import { ArrowLeft, Home, Church, User, Code, Send, Shield } from "lucide-react";
+import { useEffect, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
 
 const Menu = () => {
   const navigate = useNavigate();
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  useEffect(() => {
+    checkAdminStatus();
+  }, []);
+
+  const checkAdminStatus = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+
+    const { data } = await supabase
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", user.id)
+      .maybeSingle();
+
+    if (data?.role === "admin") {
+      setIsAdmin(true);
+    }
+  };
 
   const menuItems = [
+    ...(isAdmin ? [{
+      title: "Admin Panel",
+      description: "Manage devotionals and announcements",
+      icon: Shield,
+      action: () => navigate("/admin")
+    }] : []),
     {
       title: "Dashboard",
       description: "Return to home",
