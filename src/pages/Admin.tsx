@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { ArrowLeft, Upload, Plus, Trash2 } from "lucide-react";
+import { ArrowLeft, Upload, Plus, Trash2, Shield } from "lucide-react";
 
 const Admin = () => {
   const [isAdmin, setIsAdmin] = useState(false);
@@ -18,6 +18,7 @@ const Admin = () => {
   const [announcementContent, setAnnouncementContent] = useState("");
   const [devotionals, setDevotionals] = useState<any[]>([]);
   const [announcements, setAnnouncements] = useState<any[]>([]);
+  const [adminRequests, setAdminRequests] = useState<any[]>([]);
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -55,13 +56,15 @@ const Admin = () => {
   };
 
   const fetchData = async () => {
-    const [devotionalsRes, announcementsRes] = await Promise.all([
+    const [devotionalsRes, announcementsRes, requestsRes] = await Promise.all([
       supabase.from("devotionals").select("*").order("created_at", { ascending: false }),
       supabase.from("announcements").select("*").order("created_at", { ascending: false }),
+      supabase.from("admin_requests").select("*").eq("status", "pending").order("requested_at", { ascending: false }),
     ]);
 
     if (devotionalsRes.data) setDevotionals(devotionalsRes.data);
     if (announcementsRes.data) setAnnouncements(announcementsRes.data);
+    if (requestsRes.data) setAdminRequests(requestsRes.data);
   };
 
   const handleDevotionalUpload = async (e: React.FormEvent) => {
@@ -134,6 +137,45 @@ const Admin = () => {
       if (error) throw error;
 
       toast({ title: `${type === "devotional" ? "Devotional" : "Announcement"} deleted successfully!` });
+      fetchData();
+    } catch (error: any) {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    }
+  };
+
+  const handleAdminRequest = async (requestId: string, userId: string, status: "approved" | "rejected") => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      // Update request status
+      const { error: updateError } = await supabase
+        .from("admin_requests")
+        .update({
+          status,
+          reviewed_by: user?.id,
+          reviewed_at: new Date().toISOString(),
+        })
+        .eq("id", requestId);
+
+      if (updateError) throw updateError;
+
+      // If approved, add admin role
+      if (status === "approved") {
+        const { error: roleError } = await supabase
+          .from("user_roles")
+          .insert({
+            user_id: userId,
+            role: "admin",
+          });
+
+        if (roleError) throw roleError;
+      }
+
+      toast({
+        title: `Request ${status}!`,
+        description: `Admin request has been ${status}.`,
+      });
+      
       fetchData();
     } catch (error: any) {
       toast({ title: "Error", description: error.message, variant: "destructive" });
@@ -273,6 +315,53 @@ const Admin = () => {
             </CardContent>
           </Card>
         </div>
+
+        {adminRequests.length > 0 && (
+          <Card className="backdrop-blur-lg bg-card/50 border-[var(--glass-border)] mb-8">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Shield className="h-5 w-5" />
+                Pending Admin Requests ({adminRequests.length})
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                {adminRequests.map((request) => (
+                  <div
+                    key={request.id}
+                    className="flex justify-between items-center p-4 rounded-lg bg-background/30 border border-primary/10"
+                  >
+                    <div className="flex-1">
+                      <p className="font-medium">{request.email}</p>
+                      {request.username && (
+                        <p className="text-sm text-muted-foreground">Username: {request.username}</p>
+                      )}
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Requested: {new Date(request.requested_at).toLocaleDateString()}
+                      </p>
+                    </div>
+                    <div className="flex gap-2">
+                      <Button
+                        size="sm"
+                        onClick={() => handleAdminRequest(request.id, request.user_id, "approved")}
+                        className="bg-green-600 hover:bg-green-700"
+                      >
+                        Approve
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="destructive"
+                        onClick={() => handleAdminRequest(request.id, request.user_id, "rejected")}
+                      >
+                        Reject
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
       </div>
     </div>
   );
