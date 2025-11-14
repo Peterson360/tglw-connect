@@ -89,24 +89,45 @@ const Auth = () => {
         
         if (error) throw error;
         
-        // Insert the selected role into user_roles table
         if (data.user) {
-          const { error: roleError } = await supabase
-            .from("user_roles")
-            .insert({
-              user_id: data.user.id,
-              role: role,
+          if (role === "admin") {
+            // Create admin request instead of direct role assignment
+            const { error: requestError } = await supabase
+              .from("admin_requests")
+              .insert({
+                user_id: data.user.id,
+                email: email,
+                username: username,
+              });
+            
+            if (requestError) {
+              console.error("Error creating admin request:", requestError);
+            }
+            
+            toast({
+              title: "Admin request submitted!",
+              description: "Your request will be reviewed by an admin. You can log in as a regular user while waiting.",
             });
-          
-          if (roleError) {
-            console.error("Error setting role:", roleError);
+          } else {
+            // Regular users get immediate access
+            const { error: roleError } = await supabase
+              .from("user_roles")
+              .insert({
+                user_id: data.user.id,
+                role: role,
+              });
+            
+            if (roleError) {
+              console.error("Error setting role:", roleError);
+            }
+            
+            toast({
+              title: "Account created!",
+              description: "You can now log in.",
+            });
           }
         }
         
-        toast({
-          title: "Account created!",
-          description: `Your ${role} account is ready. You can now log in.`,
-        });
         setIsLogin(true);
       }
     } catch (error: any) {
